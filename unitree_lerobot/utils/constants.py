@@ -159,6 +159,14 @@ G1_DEX3_CONFIG = RobotConfig(
         "kRightHandIndex1",
         "kRightHandMiddle0",
         "kRightHandMiddle1",
+        "kBodyVel_x",
+        "kBodyVel_y",
+        "kBodyVel_rot",
+        "kOdometry_x",
+        "kOdometry_y",
+        "kOdometry_rot",
+        "kCameraPitch",
+        "kCameraYaw",
     ],
     cameras=[
         "cam_left_high",
@@ -172,8 +180,8 @@ G1_DEX3_CONFIG = RobotConfig(
         "color_2": "cam_left_wrist",
         "color_3": "cam_right_wrist",
     },
-    json_state_data_name=["left_arm", "right_arm", "left_ee", "right_ee"],
-    json_action_data_name=["left_arm", "right_arm", "left_ee", "right_ee"],
+    json_state_data_name=["left_arm", "right_arm", "left_ee", "right_ee", "body_vel", "Odometry", "camera"],
+    json_action_data_name=["left_arm", "right_arm", "left_ee", "right_ee", "body_vel", "Odometry", "camera"],
 )
 
 
