@@ -208,14 +208,14 @@ def create_empty_dataset(
     features = {
         "observation.state": {
             "dtype": "float32",
-            "shape": (len(motors),),
+            "shape": (len(motors),), #probably needs to be changed
             "names": [
                 motors,
             ],
         },
         "action": {
             "dtype": "float32",
-            "shape": (len(motors),),
+            "shape": (len(motors),), #probably needs to be changed
             "names": [
                 motors,
             ],
