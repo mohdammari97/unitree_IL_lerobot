@@ -31,6 +31,31 @@ from lerobot.datasets.lerobot_dataset import LeRobotDataset
 
 from unitree_lerobot.utils.constants import ROBOT_CONFIGS
 
+def _to_np1d(x):
+    """Return a 1D float32 numpy array from list/ndarray/None."""
+    if x is None:
+        return np.zeros((0,), dtype=np.float32)
+    arr = np.asarray(x, dtype=np.float32)
+    return arr.reshape(-1)
+
+def _build_feature_names_from_first_frame(first_frame_states: dict, parts: list[str]) -> list[str]:
+    """
+    Build human-readable names that match the flattened vector:
+    For each part: qpos[...] then qvel[...] (if any; empty contributes nothing).
+    """
+    names = []
+    for part in parts:
+        block = first_frame_states.get(part, {}) or {}
+        qpos_len = len(block.get("qpos", []) or [])
+        qvel_len = len(block.get("qvel", []) or [])
+
+        # qpos names
+        for i in range(qpos_len):
+            names.append(f"{part}.qpos[{i}]")
+        # qvel names (only if exists / non-empty)
+        for i in range(qvel_len):
+            names.append(f"{part}.qvel[{i}]")
+    return names
 
 @dataclasses.dataclass(frozen=True)
 class DatasetConfig:
@@ -99,25 +124,30 @@ class JsonDataset:
 
     def _extract_data(self, episode_data: Dict, key: str, parts: List[str]) -> np.ndarray:
         """
-        Extract data from episode dictionary for specified parts.
-
-        Args:
-            episode_data: Dictionary containing episode data
-            key: Data key to extract ('states' or 'actions')
-            parts: List of parts to include ('left_arm', 'right_arm')
-
-        Returns:
-            Concatenated numpy array of the requested data
+        Flatten per-frame data by concatenating, for each part in 'parts':
+        [ qpos(part) , qvel(part) ]
+        Parts with empty qvel simply contribute no qvel entries.
         """
         result = []
         for sample_data in episode_data["data"]:
-            data_array = np.array([], dtype=np.float32)
+            frame_vec = np.array([], dtype=np.float32)
+            part_dict = sample_data.get(key, {}) or {}
+
             for part in parts:
-                if part in sample_data[key] and sample_data[key][part] is not None:
-                    qpos = np.array(sample_data[key][part]["qpos"], dtype=np.float32)
-                    data_array = np.concatenate([data_array, qpos])
-            result.append(data_array)
-        return np.array(result)
+                block = part_dict.get(part, {}) or {}
+
+                # qpos
+                qpos = _to_np1d(block.get("qpos", []))
+                if qpos.size:
+                    frame_vec = np.concatenate([frame_vec, qpos])
+
+                # qvel (optional; for parts like body_vel this will be non-empty)
+                qvel = _to_np1d(block.get("qvel", []))
+                if qvel.size:
+                    frame_vec = np.concatenate([frame_vec, qvel])
+
+            result.append(frame_vec)
+        return np.vstack(result) if result else np.zeros((0, 0), dtype=np.float32)
 
     def _parse_images(self, episode_path: str, episode_data) -> dict[str, list[np.ndarray]]:
         """Load and stack images for a given camera key."""
@@ -190,6 +220,7 @@ class JsonDataset:
             "cameras": cameras,
             "task": task,
             "data_cfg": data_cfg,
+            "raw_episode": episode_data,
         }
 
 
@@ -201,24 +232,30 @@ def create_empty_dataset(
     has_velocity: bool = False,
     has_effort: bool = False,
     dataset_config: DatasetConfig = DEFAULT_DATASET_CONFIG,
+    state_dim: int | None = None,            
+    action_dim: int | None = None,           
+    feature_names: List[str] | None = None,  
 ) -> LeRobotDataset:
     motors = ROBOT_CONFIGS[robot_type].motors
     cameras = ROBOT_CONFIGS[robot_type].cameras
 
+    if state_dim is None:
+        state_dim = len(motors)
+    if action_dim is None:
+        action_dim = len(motors)
+
+    names = feature_names if feature_names is not None else motors  # flat list, not [motors]
+
     features = {
         "observation.state": {
             "dtype": "float32",
-            "shape": (len(motors),), #probably needs to be changed
-            "names": [
-                motors,
-            ],
+            "shape": (state_dim,),
+            "names": names,    # <-- NOT [motors]
         },
         "action": {
             "dtype": "float32",
-            "shape": (len(motors),), #probably needs to be changed
-            "names": [
-                motors,
-            ],
+            "shape": (action_dim,),
+            "names": names,
         },
     }
 
@@ -310,7 +347,17 @@ def json_to_lerobot(
 ):
     if (HF_LEROBOT_HOME / repo_id).exists():
         shutil.rmtree(HF_LEROBOT_HOME / repo_id)
+    # Probe episode 0 to get real dims and names
+    temp_ds = JsonDataset(raw_dir, robot_type)
+    probe = temp_ds.get_item(0)
 
+    state_dim  = int(probe["state"].shape[1])
+    action_dim = int(probe["action"].shape[1])
+
+    # Build names from the first frame of the first episode
+    parts_order = ROBOT_CONFIGS[robot_type].json_state_data_name
+    first_frame_states = probe["raw_episode"]["data"][0]["states"]
+    feature_names = _build_feature_names_from_first_frame(first_frame_states, parts_order)
     dataset = create_empty_dataset(
         repo_id,
         robot_type=robot_type,
@@ -318,6 +365,9 @@ def json_to_lerobot(
         has_effort=False,
         has_velocity=False,
         dataset_config=dataset_config,
+        state_dim=state_dim,
+        action_dim=action_dim,
+        feature_names=feature_names,
     )
     dataset = populate_dataset(
         dataset,

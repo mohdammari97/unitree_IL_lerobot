@@ -180,8 +180,8 @@ G1_DEX3_CONFIG = RobotConfig(
         "color_2": "cam_left_wrist",
         "color_3": "cam_right_wrist",
     },
-    json_state_data_name=["left_arm", "right_arm", "left_ee", "right_ee", "body_vel", "Odometry", "camera"],
-    json_action_data_name=["left_arm", "right_arm", "left_ee", "right_ee", "body_vel", "Odometry", "camera"],
+    json_state_data_name=["left_arm", "right_arm", "left_ee", "right_ee", "body_vel", "odometry", "camera"],
+    json_action_data_name=["left_arm", "right_arm", "left_ee", "right_ee", "body_vel", "odometry", "camera"],
 )
 
 
