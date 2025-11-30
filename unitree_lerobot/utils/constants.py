@@ -127,7 +127,7 @@ G1_DEX1_CONFIG_SIM = RobotConfig(
     json_state_data_name=["left_arm", "right_arm", "left_ee", "right_ee"],
     json_action_data_name=["left_arm", "right_arm", "left_ee", "right_ee"],
 )
-
+#l
 
 G1_DEX3_CONFIG = RobotConfig(
     motors=[
