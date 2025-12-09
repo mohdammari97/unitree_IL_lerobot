@@ -6,7 +6,7 @@ Script Json to Lerobot.
 # --robot_type  The type of the robot used in the dataset (e.g., Unitree_Z1_Single, Unitree_Z1_Dual, Unitree_G1_Dex1, Unitree_G1_Dex3, Unitree_G1_Brainco, Unitree_G1_Inspire)
 # --push_to_hub Whether or not to upload the dataset to Hugging Face Hub (true or false)
 
-python convert_unitree_json_to_lerobot_copy.py \
+python convert_unitree_json_to_lerobot.py \
     --raw-dir /home/yu/MA/test_datasets/bag \
     --repo-id yu/g1_grabcube_double_hand \
     --robot_type Unitree_G1_Dex3_motion \
@@ -251,25 +251,44 @@ def create_empty_dataset(
     has_effort: bool = False,
     dataset_config: DatasetConfig = DEFAULT_DATASET_CONFIG,
 ) -> LeRobotDataset:
-    motors = ROBOT_CONFIGS[robot_type].motors
     cameras = ROBOT_CONFIGS[robot_type].cameras
-
-    features = {
-        "observation.state": {
-            "dtype": "float32",
-            "shape": (len(motors),),
-            "names": [
-                motors,
-            ],
-        },
-        "action": {
-            "dtype": "float32",
-            "shape": (len(motors)-3,),
-            "names": [
-                motors,
-            ],
-        },
-    }
+    if ROBOT_CONFIGS[robot_type] == "Unitree_G1_Dex3_motion":
+        states = ROBOT_CONFIGS[robot_type].states
+        actions = ROBOT_CONFIGS[robot_type].actions
+        features = {
+            "observation.state": {
+                "dtype": "float32",
+                "shape": (len(states),),
+                "names": [
+                    states,
+                ],
+            },
+            "action": {
+                "dtype": "float32",
+                "shape": (len(actions),),
+                "names": [
+                    actions,
+                ],
+            },
+        }
+    else:
+        motors = ROBOT_CONFIGS[robot_type].motors
+        features = {
+            "observation.state": {
+                "dtype": "float32",
+                "shape": (len(motors),),
+                "names": [
+                    motors,
+                ],
+            },
+            "action": {
+                "dtype": "float32",
+                "shape": (len(motors),),
+                "names": [
+                    motors,
+                ],
+            },
+        }
 
     if has_velocity:
         features["observation.velocity"] = {
