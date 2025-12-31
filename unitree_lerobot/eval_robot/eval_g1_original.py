@@ -7,7 +7,7 @@ Refer to:   lerobot/lerobot/scripts/eval.py
 import time
 import torch
 import logging
-import math
+
 import numpy as np
 from pprint import pformat
 from dataclasses import asdict
@@ -89,18 +89,7 @@ def eval_policy(
                 "has_wrist_cam",
             ]
         )
-        sport_client = None
-        if cfg.motion:
-            from unitree_sdk2py.g1.loco.g1_loco_client import LocoClient
 
-            sport_client = LocoClient()
-            sport_client.SetTimeout(0.0001)
-            sport_client.Init()
-
-            # Safety limits (tune as needed)
-            MAX_VX = 0.5   # m/s
-            MAX_VY = 0.5   # m/s
-            MAX_WZ = 0.5   # rad/s
         # Get initial pose from the first step of the dataset
         from_idx = dataset.meta.episodes["dataset_from_index"][0]
         step = dataset[from_idx]
@@ -148,22 +137,6 @@ def eval_policy(
                 )
                 action_np = action.cpu().numpy()
                 # 3. Execute Action
-                if sport_client is not None:
-                    if action_np.shape[0] <= 32:
-                        raise RuntimeError(
-                            f"Action dim {action_np.shape[0]} < 33, cannot read indices 30..32"
-                        )
-
-                    vx = float(action_np[30])
-                    vy = float(action_np[31])
-                    wz = float(action_np[32])
-
-                    # Clip for safety (no Damp; keep sport client active)
-                    vx = float(np.clip(vx, -MAX_VX, MAX_VX))
-                    vy = float(np.clip(vy, -MAX_VY, MAX_VY))
-                    wz = float(np.clip(wz, -MAX_WZ, MAX_WZ))
-
-                    sport_client.Move(vx, vy, wz)
                 arm_action = action_np[:arm_dof]
                 tau = arm_ik.solve_tau(arm_action)
                 arm_ctrl.ctrl_dual_arm(arm_action, tau)
