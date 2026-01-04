@@ -97,7 +97,7 @@ def eval_policy(
             sport_client.SetTimeout(0.0001)
             sport_client.Init()
 
-            # Safety limits (tune as needed)
+            # Safety limits 
             MAX_VX = 0.5   # m/s
             MAX_VY = 0.5   # m/s
             MAX_WZ = 0.5   # rad/s
@@ -158,7 +158,7 @@ def eval_policy(
                     vy = float(action_np[31])
                     wz = float(action_np[32])
 
-                    # Clip for safety (no Damp; keep sport client active)
+                    # Clip for safety
                     vx = float(np.clip(vx, -MAX_VX, MAX_VX))
                     vy = float(np.clip(vy, -MAX_VY, MAX_VY))
                     wz = float(np.clip(wz, -MAX_WZ, MAX_WZ))
