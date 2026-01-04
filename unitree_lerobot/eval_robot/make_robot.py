@@ -10,7 +10,7 @@ from unitree_lerobot.eval_robot.robot_control.robot_arm import (
     G1_23_ArmController,
 )
 from unitree_lerobot.eval_robot.robot_control.robot_arm_ik import G1_29_ArmIK, G1_23_ArmIK
-from unitree_lerobot.eval_robot.robot_control.robot_hand_unitree import (
+from unitree_lerobot.eval_robot.robot_control.robot_hand_unitree_not_original import (
     Dex3_1_Controller,
     Dex1_1_Gripper_Controller,
 )

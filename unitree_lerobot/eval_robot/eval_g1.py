@@ -98,8 +98,8 @@ def eval_policy(
             sport_client.Init()
 
             # Safety limits 
-            MAX_VX = 0.5   # m/s
-            MAX_VY = 0.5   # m/s
+            MAX_VX = 0.3   # m/s
+            MAX_VY = 0.3   # m/s
             MAX_WZ = 0.5   # rad/s
         # Get initial pose from the first step of the dataset
         from_idx = dataset.meta.episodes["dataset_from_index"][0]
