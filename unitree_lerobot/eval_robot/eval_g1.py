@@ -124,8 +124,8 @@ def eval_policy(
                 observation, current_arm_q, odometry, robot_vel = process_images_and_observations(
                     tv_img_array, wrist_img_array, tv_img_shape, wrist_img_shape, is_binocular, has_wrist_cam, arm_ctrl
                 )
-                dx = 0 # active camera value set to 0 now for testing without the active camera setup (only head cameras)
-                dy = 0
+                dx = np.array([0.0], dtype=np.float32) # active camera value set to 0 now for testing without the active camera setup (only head cameras)
+                dy = np.array([0.0], dtype=np.float32)
                 left_ee_state = right_ee_state = np.array([])
                 if cfg.ee:
                     with ee_shared_mem["lock"]:
