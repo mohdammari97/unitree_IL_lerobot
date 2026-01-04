@@ -10,7 +10,7 @@ from unitree_lerobot.eval_robot.robot_control.robot_arm import (
     G1_23_ArmController,
 )
 from unitree_lerobot.eval_robot.robot_control.robot_arm_ik import G1_29_ArmIK, G1_23_ArmIK
-from unitree_lerobot.eval_robot.robot_control.robot_hand_unitree_not_original import (
+from unitree_lerobot.eval_robot.robot_control.robot_hand_unitree import (
     Dex3_1_Controller,
     Dex1_1_Gripper_Controller,
 )
@@ -255,7 +255,7 @@ def process_images_and_observations(
         "observation.images.cam_right_wrist": torch.from_numpy(right_wrist_cam) if has_wrist_cam else None,
     }
     current_arm_q = arm_ctrl.get_current_dual_arm_q()
-    odometry = arm_ctrl.get_current_robot_posiion()
+    odometry = arm_ctrl.get_current_robot_position()
     robot_vel = arm_ctrl.get_current_robot_velocity()
 
     return observation, current_arm_q, odometry, robot_vel
