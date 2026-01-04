@@ -121,9 +121,11 @@ def eval_policy(
             while True:
                 loop_start_time = time.perf_counter()
                 # 1. Get Observations
-                observation, current_arm_q = process_images_and_observations(
+                observation, current_arm_q, odometry, robot_vel = process_images_and_observations(
                     tv_img_array, wrist_img_array, tv_img_shape, wrist_img_shape, is_binocular, has_wrist_cam, arm_ctrl
                 )
+                dx = 0 # active camera value set to 0 now for testing without the active camera setup (only head cameras)
+                dy = 0
                 left_ee_state = right_ee_state = np.array([])
                 if cfg.ee:
                     with ee_shared_mem["lock"]:
@@ -131,7 +133,7 @@ def eval_policy(
                         left_ee_state = full_state[:ee_dof]
                         right_ee_state = full_state[ee_dof:]
                 state_tensor = torch.from_numpy(
-                    np.concatenate((current_arm_q, left_ee_state, right_ee_state), axis=0)
+                    np.concatenate((current_arm_q, left_ee_state, right_ee_state, dx, dy, robot_vel, odometry), axis=0)
                 ).float()
                 observation["observation.state"] = state_tensor
                 # 2. Get Action from Policy
@@ -146,6 +148,7 @@ def eval_policy(
                     use_dataset=cfg.use_dataset,
                     robot_type=None,
                 )
+                #print(observation)
                 action_np = action.cpu().numpy()
                 # 3. Execute Action
                 if sport_client is not None:
